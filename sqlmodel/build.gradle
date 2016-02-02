@@ -1,0 +1,45 @@
+sourceSets {
+    main {
+        java {
+            srcDir "${project.buildDir}/generated/source/kapt/main"
+            srcDirs += kotlin.srcDirs
+        }
+    }
+    main.java.srcDirs += 'src/main/kotlin'
+}
+
+kapt {
+    generateStubs = true
+}
+
+def processor = project(':processor')
+dependencies {
+    kapt files("${processor.buildDir}/libs/processor.jar")
+    kapt "com.querydsl:querydsl-core:${project.queryDslVersion}"
+    kapt "com.querydsl:querydsl-apt:${project.queryDslVersion}"
+
+    compile "com.querydsl:querydsl-collections:${project.queryDslVersion}"
+    compile "com.querydsl:querydsl-sql:${project.queryDslVersion}"
+}
+
+compileKotlin.dependsOn(processor.jar)
+
+idea {
+    module {
+        excludeDirs -= file(project.buildDir)
+
+        excludeDirs += files(
+                "${project.buildDir}/tmp",
+                "${project.buildDir}/classes",
+                "${project.buildDir}/dependency-cache",
+                "${project.buildDir}/libs",
+                "${project.buildDir}/resources",
+        )
+
+        file(project.buildDir).listFiles().findAll { !it.name.contains("generated") }.forEach { file ->
+            excludeDirs += file
+        }
+
+        generatedSourceDirs += file("${project.buildDir}/generated")
+    }
+}
